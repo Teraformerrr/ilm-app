@@ -8,6 +8,7 @@ import '../models/quran_translation.dart';
 import '../services/quran_reader_preferences_service.dart';
 import '../services/quran_text_service.dart';
 import '../services/quran_translation_service.dart';
+import '../services/quran_urdu_translation_service.dart';
 
 class SurahReaderScreen extends StatefulWidget {
   const SurahReaderScreen({
@@ -22,9 +23,13 @@ class SurahReaderScreen extends StatefulWidget {
       _SurahReaderScreenState();
 }
 
-class _SurahReaderScreenState extends State<SurahReaderScreen> {
+class _SurahReaderScreenState
+    extends State<SurahReaderScreen> {
   late final Future<List<QuranAyah>> _ayahsFuture;
-  late final Future<List<QuranTranslation>> _translationsFuture;
+  late final Future<List<QuranTranslation>>
+      _englishTranslationsFuture;
+  late final Future<List<QuranTranslation>>
+      _urduTranslationsFuture;
 
   QuranReaderPreferences _readerPreferences =
       const QuranReaderPreferences();
@@ -36,14 +41,22 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
     super.initState();
 
     const quranTextService = QuranTextService();
-    const translationService = QuranTranslationService();
+    const englishTranslationService =
+        QuranTranslationService();
+    const urduTranslationService =
+        QuranUrduTranslationService();
 
     _ayahsFuture = quranTextService.loadSurahAyahs(
       widget.surah.number,
     );
 
-    _translationsFuture =
-        translationService.loadSurahTranslations(
+    _englishTranslationsFuture =
+        englishTranslationService.loadSurahTranslations(
+      widget.surah.number,
+    );
+
+    _urduTranslationsFuture =
+        urduTranslationService.loadSurahTranslations(
       widget.surah.number,
     );
 
@@ -51,9 +64,11 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
   }
 
   Future<void> _loadReaderPreferences() async {
-    const service = QuranReaderPreferencesService();
+    const service =
+        QuranReaderPreferencesService();
 
-    final preferences = await service.loadPreferences();
+    final preferences =
+        await service.loadPreferences();
 
     if (!mounted) return;
 
@@ -63,8 +78,11 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
     });
   }
 
-  Future<void> _setShowEnglish(bool value) async {
-    const service = QuranReaderPreferencesService();
+  Future<void> _setShowEnglish(
+    bool value,
+  ) async {
+    const service =
+        QuranReaderPreferencesService();
 
     await service.saveShowEnglish(value);
 
@@ -78,8 +96,29 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
     });
   }
 
-  Future<void> _setArabicFontSize(double value) async {
-    const service = QuranReaderPreferencesService();
+  Future<void> _setShowUrdu(
+    bool value,
+  ) async {
+    const service =
+        QuranReaderPreferencesService();
+
+    await service.saveShowUrdu(value);
+
+    if (!mounted) return;
+
+    setState(() {
+      _readerPreferences =
+          _readerPreferences.copyWith(
+        showUrdu: value,
+      );
+    });
+  }
+
+  Future<void> _setArabicFontSize(
+    double value,
+  ) async {
+    const service =
+        QuranReaderPreferencesService();
 
     await service.saveArabicFontSize(value);
 
@@ -93,8 +132,11 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
     });
   }
 
-  Future<void> _setEnglishFontSize(double value) async {
-    const service = QuranReaderPreferencesService();
+  Future<void> _setEnglishFontSize(
+    double value,
+  ) async {
+    const service =
+        QuranReaderPreferencesService();
 
     await service.saveEnglishFontSize(value);
 
@@ -108,20 +150,41 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
     });
   }
 
+  Future<void> _setUrduFontSize(
+    double value,
+  ) async {
+    const service =
+        QuranReaderPreferencesService();
+
+    await service.saveUrduFontSize(value);
+
+    if (!mounted) return;
+
+    setState(() {
+      _readerPreferences =
+          _readerPreferences.copyWith(
+        urduFontSize: value,
+      );
+    });
+  }
+
   Future<void> _openReaderSettings() async {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (context) {
         return StatefulBuilder(
-          builder: (context, setModalState) {
+          builder: (
+            context,
+            setModalState,
+          ) {
             return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(
+              child: SingleChildScrollView(
+                padding:
+                    const EdgeInsets.all(
                   AppSpacing.lg,
                 ),
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment:
                       CrossAxisAlignment.start,
                   children: [
@@ -141,7 +204,8 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
                     ),
 
                     SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
+                      contentPadding:
+                          EdgeInsets.zero,
                       title: const Text(
                         'English Translation',
                       ),
@@ -150,10 +214,38 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
                       ),
                       value:
                           _readerPreferences.showEnglish,
-                      onChanged: (value) async {
-                        await _setShowEnglish(value);
+                      onChanged:
+                          (value) async {
+                        await _setShowEnglish(
+                          value,
+                        );
 
-                        setModalState(() {});
+                        setModalState(
+                          () {},
+                        );
+                      },
+                    ),
+
+                    SwitchListTile(
+                      contentPadding:
+                          EdgeInsets.zero,
+                      title: const Text(
+                        'Urdu Translation',
+                      ),
+                      subtitle: const Text(
+                        'Show Muhammad Junagarhi translation.',
+                      ),
+                      value:
+                          _readerPreferences.showUrdu,
+                      onChanged:
+                          (value) async {
+                        await _setShowUrdu(
+                          value,
+                        );
+
+                        setModalState(
+                          () {},
+                        );
                       },
                     ),
 
@@ -176,22 +268,25 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
                       min: 20,
                       max: 40,
                       divisions: 10,
-                      label: _readerPreferences
-                          .arabicFontSize
-                          .round()
-                          .toString(),
-                      onChanged: (value) async {
-                        await _setArabicFontSize(value);
+                      label:
+                          _readerPreferences
+                              .arabicFontSize
+                              .round()
+                              .toString(),
+                      onChanged:
+                          (value) async {
+                        await _setArabicFontSize(
+                          value,
+                        );
 
-                        setModalState(() {});
+                        setModalState(
+                          () {},
+                        );
                       },
                     ),
 
                     Text(
                       '${_readerPreferences.arabicFontSize.round()}',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall,
                     ),
 
                     const SizedBox(
@@ -215,26 +310,71 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
                       min: 12,
                       max: 26,
                       divisions: 14,
-                      label: _readerPreferences
-                          .englishFontSize
-                          .round()
-                          .toString(),
-                      onChanged: _readerPreferences.showEnglish
-                          ? (value) async {
-                              await _setEnglishFontSize(
-                                value,
-                              );
+                      label:
+                          _readerPreferences
+                              .englishFontSize
+                              .round()
+                              .toString(),
+                      onChanged:
+                          _readerPreferences.showEnglish
+                              ? (value) async {
+                                  await _setEnglishFontSize(
+                                    value,
+                                  );
 
-                              setModalState(() {});
-                            }
-                          : null,
+                                  setModalState(
+                                    () {},
+                                  );
+                                }
+                              : null,
                     ),
 
                     Text(
                       '${_readerPreferences.englishFontSize.round()}',
+                    ),
+
+                    const SizedBox(
+                      height: AppSpacing.md,
+                    ),
+
+                    Text(
+                      'Urdu Font Size',
                       style: Theme.of(context)
                           .textTheme
-                          .bodySmall,
+                          .titleMedium
+                          ?.copyWith(
+                            fontWeight:
+                                FontWeight.w600,
+                          ),
+                    ),
+
+                    Slider(
+                      value:
+                          _readerPreferences.urduFontSize,
+                      min: 14,
+                      max: 30,
+                      divisions: 16,
+                      label:
+                          _readerPreferences
+                              .urduFontSize
+                              .round()
+                              .toString(),
+                      onChanged:
+                          _readerPreferences.showUrdu
+                              ? (value) async {
+                                  await _setUrduFontSize(
+                                    value,
+                                  );
+
+                                  setModalState(
+                                    () {},
+                                  );
+                                }
+                              : null,
+                    ),
+
+                    Text(
+                      '${_readerPreferences.urduFontSize.round()}',
                     ),
 
                     const SizedBox(
@@ -277,7 +417,10 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
       ),
       body: FutureBuilder<List<QuranAyah>>(
         future: _ayahsFuture,
-        builder: (context, ayahSnapshot) {
+        builder: (
+          context,
+          ayahSnapshot,
+        ) {
           if (ayahSnapshot.connectionState ==
               ConnectionState.waiting) {
             return const Center(
@@ -293,97 +436,162 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
             );
           }
 
-          return FutureBuilder<List<QuranTranslation>>(
-            future: _translationsFuture,
+          return FutureBuilder<
+              List<QuranTranslation>>(
+            future:
+                _englishTranslationsFuture,
             builder: (
               context,
-              translationSnapshot,
+              englishSnapshot,
             ) {
-              if (translationSnapshot.connectionState ==
+              if (englishSnapshot
+                      .connectionState ==
                   ConnectionState.waiting) {
                 return const Center(
-                  child: CircularProgressIndicator(),
+                  child:
+                      CircularProgressIndicator(),
                 );
               }
 
-              if (translationSnapshot.hasError) {
+              if (englishSnapshot.hasError) {
                 return _ErrorView(
                   message:
                       'Unable to load English translation.',
-                  error: translationSnapshot.error,
+                  error:
+                      englishSnapshot.error,
                 );
               }
 
-              final ayahs =
-                  ayahSnapshot.data ??
-                      const <QuranAyah>[];
+              return FutureBuilder<
+                  List<QuranTranslation>>(
+                future:
+                    _urduTranslationsFuture,
+                builder: (
+                  context,
+                  urduSnapshot,
+                ) {
+                  if (urduSnapshot
+                          .connectionState ==
+                      ConnectionState
+                          .waiting) {
+                    return const Center(
+                      child:
+                          CircularProgressIndicator(),
+                    );
+                  }
 
-              final translations =
-                  translationSnapshot.data ??
-                      const <QuranTranslation>[];
+                  if (urduSnapshot.hasError) {
+                    return _ErrorView(
+                      message:
+                          'Unable to load Urdu translation.',
+                      error:
+                          urduSnapshot.error,
+                    );
+                  }
 
-              if (ayahs.length !=
-                  translations.length) {
-                return const _ErrorView(
-                  message:
-                      'Qur’an text and translation counts do not match.',
-                );
-              }
+                  final ayahs =
+                      ayahSnapshot.data ??
+                          const <QuranAyah>[];
 
-              return ListView(
-                padding: const EdgeInsets.all(
-                  AppSpacing.lg,
-                ),
-                children: [
-                  _SurahHeader(
-                    surah: widget.surah,
-                  ),
+                  final english =
+                      englishSnapshot.data ??
+                          const <
+                              QuranTranslation>[];
 
-                  const SizedBox(
-                    height: AppSpacing.xl,
-                  ),
+                  final urdu =
+                      urduSnapshot.data ??
+                          const <
+                              QuranTranslation>[];
 
-                  ...List.generate(
-                    ayahs.length,
-                    (index) {
-                      final ayah = ayahs[index];
-                      final translation =
-                          translations[index];
+                  if (ayahs.length !=
+                          english.length ||
+                      ayahs.length !=
+                          urdu.length) {
+                    return const _ErrorView(
+                      message:
+                          'Qur’an text and translation counts do not match.',
+                    );
+                  }
 
-                      if (ayah.ayahNumber !=
-                          translation.ayahNumber) {
-                        return const _ErrorView(
-                          message:
-                              'Qur’an Ayah and translation mapping mismatch.',
-                        );
-                      }
-
-                      return _AyahCard(
-                        ayah: ayah,
-                        translation: translation,
-                        preferences:
-                            _readerPreferences,
-                      );
-                    },
-                  ),
-
-                  const SizedBox(
-                    height: AppSpacing.lg,
-                  ),
-
-                  Center(
-                    child: Text(
-                      'Qur’an text: Tanzil • English: Marmaduke Pickthall',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(
-                            color: Colors.black54,
-                          ),
+                  return ListView(
+                    padding:
+                        const EdgeInsets.all(
+                      AppSpacing.lg,
                     ),
-                  ),
-                ],
+                    children: [
+                      _SurahHeader(
+                        surah:
+                            widget.surah,
+                      ),
+
+                      const SizedBox(
+                        height:
+                            AppSpacing.xl,
+                      ),
+
+                      ...List.generate(
+                        ayahs.length,
+                        (index) {
+                          final ayah =
+                              ayahs[index];
+
+                          final englishTranslation =
+                              english[
+                                  index];
+
+                          final urduTranslation =
+                              urdu[index];
+
+                          if (ayah
+                                      .ayahNumber !=
+                                  englishTranslation
+                                      .ayahNumber ||
+                              ayah.ayahNumber !=
+                                  urduTranslation
+                                      .ayahNumber) {
+                            return const _ErrorView(
+                              message:
+                                  'Qur’an Ayah and translation mapping mismatch.',
+                            );
+                          }
+
+                          return _AyahCard(
+                            ayah:
+                                ayah,
+                            englishTranslation:
+                                englishTranslation,
+                            urduTranslation:
+                                urduTranslation,
+                            preferences:
+                                _readerPreferences,
+                          );
+                        },
+                      ),
+
+                      const SizedBox(
+                        height:
+                            AppSpacing.lg,
+                      ),
+
+                      Center(
+                        child: Text(
+                          'Qur’an text: Tanzil • English: Marmaduke Pickthall • Urdu: Muhammad Junagarhi / QuranEnc',
+                          textAlign:
+                              TextAlign.center,
+                          style: Theme.of(
+                            context,
+                          )
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                color:
+                                    Colors.black54,
+                              ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               );
             },
           );
@@ -393,7 +601,8 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
   }
 }
 
-class _SurahHeader extends StatelessWidget {
+class _SurahHeader
+    extends StatelessWidget {
   const _SurahHeader({
     required this.surah,
   });
@@ -406,41 +615,52 @@ class _SurahHeader extends StatelessWidget {
       children: [
         Text(
           surah.arabicName,
-          textAlign: TextAlign.center,
-          textDirection: TextDirection.rtl,
+          textAlign:
+              TextAlign.center,
+          textDirection:
+              TextDirection.rtl,
           style: Theme.of(context)
               .textTheme
               .headlineMedium
               ?.copyWith(
-                fontWeight: FontWeight.w700,
+                fontWeight:
+                    FontWeight.w700,
               ),
         ),
+
         const SizedBox(
           height: AppSpacing.sm,
         ),
+
         Text(
           surah.englishName,
-          textAlign: TextAlign.center,
+          textAlign:
+              TextAlign.center,
           style: Theme.of(context)
               .textTheme
               .titleLarge
               ?.copyWith(
-                fontWeight: FontWeight.w700,
+                fontWeight:
+                    FontWeight.w700,
               ),
         ),
+
         const SizedBox(
           height: AppSpacing.xs,
         ),
+
         Text(
           '${surah.translatedName} • '
           '${surah.revelationType} • '
           '${surah.ayahCount} Ayahs',
-          textAlign: TextAlign.center,
+          textAlign:
+              TextAlign.center,
           style: Theme.of(context)
               .textTheme
               .bodyMedium
               ?.copyWith(
-                color: Colors.black54,
+                color:
+                    Colors.black54,
               ),
         ),
       ],
@@ -448,25 +668,33 @@ class _SurahHeader extends StatelessWidget {
   }
 }
 
-class _AyahCard extends StatelessWidget {
+class _AyahCard
+    extends StatelessWidget {
   const _AyahCard({
     required this.ayah,
-    required this.translation,
+    required this.englishTranslation,
+    required this.urduTranslation,
     required this.preferences,
   });
 
   final QuranAyah ayah;
-  final QuranTranslation translation;
-  final QuranReaderPreferences preferences;
+  final QuranTranslation
+      englishTranslation;
+  final QuranTranslation
+      urduTranslation;
+  final QuranReaderPreferences
+      preferences;
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(
+      margin:
+          const EdgeInsets.only(
         bottom: AppSpacing.md,
       ),
       child: Padding(
-        padding: const EdgeInsets.all(
+        padding:
+            const EdgeInsets.all(
           AppSpacing.lg,
         ),
         child: Column(
@@ -478,14 +706,19 @@ class _AyahCard extends StatelessWidget {
                 CircleAvatar(
                   radius: 18,
                   child: Text(
-                    ayah.ayahNumber.toString(),
+                    ayah.ayahNumber
+                        .toString(),
                   ),
                 ),
+
                 const Spacer(),
+
                 IconButton(
-                  tooltip: 'Bookmark',
+                  tooltip:
+                      'Bookmark',
                   onPressed: () {
-                    ScaffoldMessenger.of(context)
+                    ScaffoldMessenger
+                            .of(context)
                         .showSnackBar(
                       const SnackBar(
                         content: Text(
@@ -507,30 +740,39 @@ class _AyahCard extends StatelessWidget {
 
             SelectableText(
               ayah.arabicText,
-              textAlign: TextAlign.right,
-              textDirection: TextDirection.rtl,
+              textAlign:
+                  TextAlign.right,
+              textDirection:
+                  TextDirection.rtl,
               style: TextStyle(
                 fontSize:
-                    preferences.arabicFontSize,
+                    preferences
+                        .arabicFontSize,
                 height: 2,
-                fontWeight: FontWeight.w500,
+                fontWeight:
+                    FontWeight.w500,
               ),
             ),
 
-            if (preferences.showEnglish) ...[
+            if (preferences
+                .showEnglish) ...[
               const SizedBox(
-                height: AppSpacing.lg,
+                height:
+                    AppSpacing.lg,
               ),
 
               const Divider(),
 
               const SizedBox(
-                height: AppSpacing.md,
+                height:
+                    AppSpacing.md,
               ),
 
               Text(
                 'English',
-                style: Theme.of(context)
+                style: Theme.of(
+                  context,
+                )
                     .textTheme
                     .labelLarge
                     ?.copyWith(
@@ -540,29 +782,109 @@ class _AyahCard extends StatelessWidget {
               ),
 
               const SizedBox(
-                height: AppSpacing.sm,
+                height:
+                    AppSpacing.sm,
               ),
 
               SelectableText(
-                translation.text,
+                englishTranslation
+                    .text,
                 style: TextStyle(
                   fontSize:
-                      preferences.englishFontSize,
+                      preferences
+                          .englishFontSize,
                   height: 1.6,
                 ),
               ),
 
               const SizedBox(
-                height: AppSpacing.xs,
+                height:
+                    AppSpacing.xs,
               ),
 
               Text(
                 'Marmaduke Pickthall',
-                style: Theme.of(context)
+                style: Theme.of(
+                  context,
+                )
                     .textTheme
                     .bodySmall
                     ?.copyWith(
-                      color: Colors.black54,
+                      color:
+                          Colors.black54,
+                    ),
+              ),
+            ],
+
+            if (preferences
+                .showUrdu) ...[
+              const SizedBox(
+                height:
+                    AppSpacing.lg,
+              ),
+
+              const Divider(),
+
+              const SizedBox(
+                height:
+                    AppSpacing.md,
+              ),
+
+              Text(
+                'اردو',
+                textAlign:
+                    TextAlign.right,
+                textDirection:
+                    TextDirection.rtl,
+                style: Theme.of(
+                  context,
+                )
+                    .textTheme
+                    .labelLarge
+                    ?.copyWith(
+                      fontWeight:
+                          FontWeight.w700,
+                    ),
+              ),
+
+              const SizedBox(
+                height:
+                    AppSpacing.sm,
+              ),
+
+              SelectableText(
+                urduTranslation.text,
+                textAlign:
+                    TextAlign.right,
+                textDirection:
+                    TextDirection.rtl,
+                style: TextStyle(
+                  fontSize:
+                      preferences
+                          .urduFontSize,
+                  height: 1.8,
+                ),
+              ),
+
+              const SizedBox(
+                height:
+                    AppSpacing.xs,
+              ),
+
+              Text(
+                'محمد جوناگڑھی • QuranEnc',
+                textAlign:
+                    TextAlign.right,
+                textDirection:
+                    TextDirection.rtl,
+                style: Theme.of(
+                  context,
+                )
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(
+                      color:
+                          Colors.black54,
                     ),
               ),
             ],
@@ -573,7 +895,8 @@ class _AyahCard extends StatelessWidget {
   }
 }
 
-class _ErrorView extends StatelessWidget {
+class _ErrorView
+    extends StatelessWidget {
   const _ErrorView({
     required this.message,
     this.error,
@@ -586,7 +909,8 @@ class _ErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(
+        padding:
+            const EdgeInsets.all(
           AppSpacing.lg,
         ),
         child: Column(
@@ -597,25 +921,36 @@ class _ErrorView extends StatelessWidget {
               Icons.error_outline,
               size: 48,
             ),
+
             const SizedBox(
               height: AppSpacing.md,
             ),
+
             Text(
               message,
-              textAlign: TextAlign.center,
+              textAlign:
+                  TextAlign.center,
             ),
-            if (error != null) ...[
+
+            if (error !=
+                null) ...[
               const SizedBox(
-                height: AppSpacing.sm,
+                height:
+                    AppSpacing.sm,
               ),
+
               Text(
                 error.toString(),
-                textAlign: TextAlign.center,
-                style: Theme.of(context)
+                textAlign:
+                    TextAlign.center,
+                style: Theme.of(
+                  context,
+                )
                     .textTheme
                     .bodySmall
                     ?.copyWith(
-                      color: Colors.black54,
+                      color:
+                          Colors.black54,
                     ),
               ),
             ],
