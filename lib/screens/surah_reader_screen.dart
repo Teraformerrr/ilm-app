@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../core/app_spacing.dart';
 import '../models/quran_ayah.dart';
+import '../models/quran_reader_preferences.dart';
 import '../models/quran_surah.dart';
 import '../models/quran_translation.dart';
+import '../services/quran_reader_preferences_service.dart';
 import '../services/quran_text_service.dart';
 import '../services/quran_translation_service.dart';
 
@@ -20,22 +22,23 @@ class SurahReaderScreen extends StatefulWidget {
       _SurahReaderScreenState();
 }
 
-class _SurahReaderScreenState
-    extends State<SurahReaderScreen> {
+class _SurahReaderScreenState extends State<SurahReaderScreen> {
   late final Future<List<QuranAyah>> _ayahsFuture;
-  late final Future<List<QuranTranslation>>
-      _translationsFuture;
+  late final Future<List<QuranTranslation>> _translationsFuture;
+
+  QuranReaderPreferences _readerPreferences =
+      const QuranReaderPreferences();
+
+  bool _isLoadingPreferences = true;
 
   @override
   void initState() {
     super.initState();
 
     const quranTextService = QuranTextService();
-    const translationService =
-        QuranTranslationService();
+    const translationService = QuranTranslationService();
 
-    _ayahsFuture =
-        quranTextService.loadSurahAyahs(
+    _ayahsFuture = quranTextService.loadSurahAyahs(
       widget.surah.number,
     );
 
@@ -43,15 +46,234 @@ class _SurahReaderScreenState
         translationService.loadSurahTranslations(
       widget.surah.number,
     );
+
+    _loadReaderPreferences();
+  }
+
+  Future<void> _loadReaderPreferences() async {
+    const service = QuranReaderPreferencesService();
+
+    final preferences = await service.loadPreferences();
+
+    if (!mounted) return;
+
+    setState(() {
+      _readerPreferences = preferences;
+      _isLoadingPreferences = false;
+    });
+  }
+
+  Future<void> _setShowEnglish(bool value) async {
+    const service = QuranReaderPreferencesService();
+
+    await service.saveShowEnglish(value);
+
+    if (!mounted) return;
+
+    setState(() {
+      _readerPreferences =
+          _readerPreferences.copyWith(
+        showEnglish: value,
+      );
+    });
+  }
+
+  Future<void> _setArabicFontSize(double value) async {
+    const service = QuranReaderPreferencesService();
+
+    await service.saveArabicFontSize(value);
+
+    if (!mounted) return;
+
+    setState(() {
+      _readerPreferences =
+          _readerPreferences.copyWith(
+        arabicFontSize: value,
+      );
+    });
+  }
+
+  Future<void> _setEnglishFontSize(double value) async {
+    const service = QuranReaderPreferencesService();
+
+    await service.saveEnglishFontSize(value);
+
+    if (!mounted) return;
+
+    setState(() {
+      _readerPreferences =
+          _readerPreferences.copyWith(
+        englishFontSize: value,
+      );
+    });
+  }
+
+  Future<void> _openReaderSettings() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(
+                  AppSpacing.lg,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Reader Options',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(
+                            fontWeight:
+                                FontWeight.w700,
+                          ),
+                    ),
+
+                    const SizedBox(
+                      height: AppSpacing.lg,
+                    ),
+
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text(
+                        'English Translation',
+                      ),
+                      subtitle: const Text(
+                        'Show Marmaduke Pickthall translation.',
+                      ),
+                      value:
+                          _readerPreferences.showEnglish,
+                      onChanged: (value) async {
+                        await _setShowEnglish(value);
+
+                        setModalState(() {});
+                      },
+                    ),
+
+                    const Divider(),
+
+                    Text(
+                      'Arabic Font Size',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(
+                            fontWeight:
+                                FontWeight.w600,
+                          ),
+                    ),
+
+                    Slider(
+                      value:
+                          _readerPreferences.arabicFontSize,
+                      min: 20,
+                      max: 40,
+                      divisions: 10,
+                      label: _readerPreferences
+                          .arabicFontSize
+                          .round()
+                          .toString(),
+                      onChanged: (value) async {
+                        await _setArabicFontSize(value);
+
+                        setModalState(() {});
+                      },
+                    ),
+
+                    Text(
+                      '${_readerPreferences.arabicFontSize.round()}',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall,
+                    ),
+
+                    const SizedBox(
+                      height: AppSpacing.md,
+                    ),
+
+                    Text(
+                      'English Font Size',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(
+                            fontWeight:
+                                FontWeight.w600,
+                          ),
+                    ),
+
+                    Slider(
+                      value:
+                          _readerPreferences.englishFontSize,
+                      min: 12,
+                      max: 26,
+                      divisions: 14,
+                      label: _readerPreferences
+                          .englishFontSize
+                          .round()
+                          .toString(),
+                      onChanged: _readerPreferences.showEnglish
+                          ? (value) async {
+                              await _setEnglishFontSize(
+                                value,
+                              );
+
+                              setModalState(() {});
+                            }
+                          : null,
+                    ),
+
+                    Text(
+                      '${_readerPreferences.englishFontSize.round()}',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall,
+                    ),
+
+                    const SizedBox(
+                      height: AppSpacing.md,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingPreferences) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
           widget.surah.englishName,
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Reader Options',
+            onPressed: _openReaderSettings,
+            icon: const Icon(
+              Icons.tune,
+            ),
+          ),
+        ],
       ),
       body: FutureBuilder<List<QuranAyah>>(
         future: _ayahsFuture,
@@ -71,17 +293,16 @@ class _SurahReaderScreenState
             );
           }
 
-          return FutureBuilder<
-              List<QuranTranslation>>(
+          return FutureBuilder<List<QuranTranslation>>(
             future: _translationsFuture,
-            builder:
-                (context, translationSnapshot) {
-              if (translationSnapshot
-                      .connectionState ==
+            builder: (
+              context,
+              translationSnapshot,
+            ) {
+              if (translationSnapshot.connectionState ==
                   ConnectionState.waiting) {
                 return const Center(
-                  child:
-                      CircularProgressIndicator(),
+                  child: CircularProgressIndicator(),
                 );
               }
 
@@ -89,8 +310,7 @@ class _SurahReaderScreenState
                 return _ErrorView(
                   message:
                       'Unable to load English translation.',
-                  error:
-                      translationSnapshot.error,
+                  error: translationSnapshot.error,
                 );
               }
 
@@ -126,15 +346,12 @@ class _SurahReaderScreenState
                   ...List.generate(
                     ayahs.length,
                     (index) {
-                      final ayah =
-                          ayahs[index];
-
+                      final ayah = ayahs[index];
                       final translation =
                           translations[index];
 
                       if (ayah.ayahNumber !=
-                          translation
-                              .ayahNumber) {
+                          translation.ayahNumber) {
                         return const _ErrorView(
                           message:
                               'Qur’an Ayah and translation mapping mismatch.',
@@ -143,8 +360,9 @@ class _SurahReaderScreenState
 
                       return _AyahCard(
                         ayah: ayah,
-                        translation:
-                            translation,
+                        translation: translation,
+                        preferences:
+                            _readerPreferences,
                       );
                     },
                   ),
@@ -156,16 +374,13 @@ class _SurahReaderScreenState
                   Center(
                     child: Text(
                       'Qur’an text: Tanzil • English: Marmaduke Pickthall',
-                      textAlign:
-                          TextAlign.center,
-                      style:
-                          Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(
-                                color:
-                                    Colors.black54,
-                              ),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(
+                            color: Colors.black54,
+                          ),
                     ),
                   ),
                 ],
@@ -197,15 +412,12 @@ class _SurahHeader extends StatelessWidget {
               .textTheme
               .headlineMedium
               ?.copyWith(
-                fontWeight:
-                    FontWeight.w700,
+                fontWeight: FontWeight.w700,
               ),
         ),
-
         const SizedBox(
           height: AppSpacing.sm,
         ),
-
         Text(
           surah.englishName,
           textAlign: TextAlign.center,
@@ -213,15 +425,12 @@ class _SurahHeader extends StatelessWidget {
               .textTheme
               .titleLarge
               ?.copyWith(
-                fontWeight:
-                    FontWeight.w700,
+                fontWeight: FontWeight.w700,
               ),
         ),
-
         const SizedBox(
           height: AppSpacing.xs,
         ),
-
         Text(
           '${surah.translatedName} • '
           '${surah.revelationType} • '
@@ -243,10 +452,12 @@ class _AyahCard extends StatelessWidget {
   const _AyahCard({
     required this.ayah,
     required this.translation,
+    required this.preferences,
   });
 
   final QuranAyah ayah;
   final QuranTranslation translation;
+  final QuranReaderPreferences preferences;
 
   @override
   Widget build(BuildContext context) {
@@ -267,19 +478,15 @@ class _AyahCard extends StatelessWidget {
                 CircleAvatar(
                   radius: 18,
                   child: Text(
-                    ayah.ayahNumber
-                        .toString(),
+                    ayah.ayahNumber.toString(),
                   ),
                 ),
-
                 const Spacer(),
-
                 IconButton(
                   tooltip: 'Bookmark',
                   onPressed: () {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(
                       const SnackBar(
                         content: Text(
                           'Bookmarks will be added later.',
@@ -301,65 +508,64 @@ class _AyahCard extends StatelessWidget {
             SelectableText(
               ayah.arabicText,
               textAlign: TextAlign.right,
-              textDirection:
-                  TextDirection.rtl,
-              style: const TextStyle(
-                fontSize: 26,
+              textDirection: TextDirection.rtl,
+              style: TextStyle(
+                fontSize:
+                    preferences.arabicFontSize,
                 height: 2,
-                fontWeight:
-                    FontWeight.w500,
+                fontWeight: FontWeight.w500,
               ),
             ),
 
-            const SizedBox(
-              height: AppSpacing.lg,
-            ),
+            if (preferences.showEnglish) ...[
+              const SizedBox(
+                height: AppSpacing.lg,
+              ),
 
-            const Divider(),
+              const Divider(),
 
-            const SizedBox(
-              height: AppSpacing.md,
-            ),
+              const SizedBox(
+                height: AppSpacing.md,
+              ),
 
-            Text(
-              'English',
-              style: Theme.of(context)
-                  .textTheme
-                  .labelLarge
-                  ?.copyWith(
-                    fontWeight:
-                        FontWeight.w700,
-                  ),
-            ),
+              Text(
+                'English',
+                style: Theme.of(context)
+                    .textTheme
+                    .labelLarge
+                    ?.copyWith(
+                      fontWeight:
+                          FontWeight.w700,
+                    ),
+              ),
 
-            const SizedBox(
-              height: AppSpacing.sm,
-            ),
+              const SizedBox(
+                height: AppSpacing.sm,
+              ),
 
-            SelectableText(
-              translation.text,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyLarge
-                  ?.copyWith(
-                    height: 1.6,
-                  ),
-            ),
+              SelectableText(
+                translation.text,
+                style: TextStyle(
+                  fontSize:
+                      preferences.englishFontSize,
+                  height: 1.6,
+                ),
+              ),
 
-            const SizedBox(
-              height: AppSpacing.xs,
-            ),
+              const SizedBox(
+                height: AppSpacing.xs,
+              ),
 
-            Text(
-              'Marmaduke Pickthall',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(
-                    color:
-                        Colors.black54,
-                  ),
-            ),
+              Text(
+                'Marmaduke Pickthall',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(
+                      color: Colors.black54,
+                    ),
+              ),
+            ],
           ],
         ),
       ),
@@ -391,31 +597,25 @@ class _ErrorView extends StatelessWidget {
               Icons.error_outline,
               size: 48,
             ),
-
             const SizedBox(
               height: AppSpacing.md,
             ),
-
             Text(
               message,
-              textAlign:
-                  TextAlign.center,
+              textAlign: TextAlign.center,
             ),
-
             if (error != null) ...[
               const SizedBox(
                 height: AppSpacing.sm,
               ),
               Text(
                 error.toString(),
-                textAlign:
-                    TextAlign.center,
+                textAlign: TextAlign.center,
                 style: Theme.of(context)
                     .textTheme
                     .bodySmall
                     ?.copyWith(
-                      color:
-                          Colors.black54,
+                      color: Colors.black54,
                     ),
               ),
             ],
