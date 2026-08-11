@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../screens/home_screen.dart';
+import '../screens/main_shell.dart';
 import 'app_theme.dart';
 
 class IlmApp extends StatelessWidget {
@@ -12,7 +12,7 @@ class IlmApp extends StatelessWidget {
       title: 'ILM',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const HomeScreen(),
+      home: const MainShell(),
     );
   }
 }
