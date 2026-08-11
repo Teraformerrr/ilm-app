@@ -1,7 +1,9 @@
+import '../models/prayer_reminder_mode.dart';
 import '../models/prayer_time.dart';
 import 'adhan_alarm_service.dart';
 import 'notification_service.dart';
 import 'prayer_calculation_service.dart';
+import 'prayer_reminder_preferences.dart';
 
 class PrayerNotificationService {
   const PrayerNotificationService();
@@ -14,8 +16,12 @@ class PrayerNotificationService {
     DateTime? startDate,
   }) async {
     const calculationService = PrayerCalculationService();
+    const reminderPreferences = PrayerReminderPreferences();
 
     final baseDate = startDate ?? DateTime.now();
+
+    final reminderModes =
+        await reminderPreferences.getAllPrayerModes();
 
     for (var dayOffset = 0;
         dayOffset < daysToSchedule;
@@ -42,12 +48,19 @@ class PrayerNotificationService {
           continue;
         }
 
+        final mode =
+            reminderModes[prayer.type] ??
+                PrayerReminderMode.adhan;
+
+        if (mode == PrayerReminderMode.off) {
+          continue;
+        }
+
         final alarmId = notificationId(
           date: date,
           type: prayer.type,
         );
 
-        // Standard prayer notification.
         await NotificationService.instance.scheduleNotification(
           id: alarmId,
           title: '${prayer.name} Prayer',
@@ -55,12 +68,13 @@ class PrayerNotificationService {
           scheduledTime: prayer.time,
         );
 
-        // Native exact alarm that starts the full Adhan.
-        await AdhanAlarmService.instance.scheduleAdhanAlarm(
-          alarmId: alarmId,
-          prayerTime: prayer.time,
-          prayerName: prayer.name,
-        );
+        if (mode == PrayerReminderMode.adhan) {
+          await AdhanAlarmService.instance.scheduleAdhanAlarm(
+            alarmId: alarmId,
+            prayerTime: prayer.time,
+            prayerName: prayer.name,
+          );
+        }
       }
     }
   }

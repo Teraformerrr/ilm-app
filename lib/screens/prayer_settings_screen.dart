@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/app_spacing.dart';
+import '../models/prayer_reminder_mode.dart';
+import '../models/prayer_time.dart';
 import '../services/adhan_audio_service.dart';
 import '../services/notification_service.dart';
 import '../services/prayer_notification_service.dart';
+import '../services/prayer_reminder_preferences.dart';
 
 class PrayerSettingsScreen extends StatefulWidget {
   const PrayerSettingsScreen({
@@ -25,27 +28,49 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
   static const String _prayerNotificationsKey =
       'prayer_notifications_enabled';
 
+  static const List<PrayerType> _prayers = [
+    PrayerType.fajr,
+    PrayerType.dhuhr,
+    PrayerType.asr,
+    PrayerType.maghrib,
+    PrayerType.isha,
+  ];
+
   bool _prayerNotificationsEnabled = false;
   bool _isRequestingPermission = false;
   bool _isLoadingPreference = true;
   bool _isAdhanPlaying = false;
 
+  Map<PrayerType, PrayerReminderMode> _prayerModes = {
+    PrayerType.fajr: PrayerReminderMode.adhan,
+    PrayerType.dhuhr: PrayerReminderMode.adhan,
+    PrayerType.asr: PrayerReminderMode.adhan,
+    PrayerType.maghrib: PrayerReminderMode.adhan,
+    PrayerType.isha: PrayerReminderMode.adhan,
+  };
+
   @override
   void initState() {
     super.initState();
-    _loadNotificationPreference();
+    _loadSettings();
   }
 
-  Future<void> _loadNotificationPreference() async {
+  Future<void> _loadSettings() async {
     final preferences = await SharedPreferences.getInstance();
+
+    const reminderPreferences = PrayerReminderPreferences();
 
     final enabled =
         preferences.getBool(_prayerNotificationsKey) ?? false;
+
+    final modes =
+        await reminderPreferences.getAllPrayerModes();
 
     if (!mounted) return;
 
     setState(() {
       _prayerNotificationsEnabled = enabled;
+      _prayerModes = modes;
       _isLoadingPreference = false;
     });
   }
@@ -74,6 +99,21 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
     const prayerNotificationService = PrayerNotificationService();
 
     await prayerNotificationService.cancelUpcomingAdhanAlarms();
+  }
+
+  Future<void> _reschedulePrayerReminders() async {
+    if (!_prayerNotificationsEnabled) {
+      return;
+    }
+
+    const prayerNotificationService = PrayerNotificationService();
+
+    await _cancelPrayerNotifications();
+
+    await prayerNotificationService.scheduleUpcomingPrayers(
+      latitude: widget.latitude,
+      longitude: widget.longitude,
+    );
   }
 
   Future<void> _togglePrayerNotifications(bool enabled) async {
@@ -180,7 +220,42 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text(
-          'Prayer reminders and Adhan are scheduled for the next 7 days.',
+          'Prayer reminders are scheduled for the next 7 days.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _changePrayerMode(
+    PrayerType prayerType,
+    PrayerReminderMode? mode,
+  ) async {
+    if (mode == null) return;
+
+    const reminderPreferences = PrayerReminderPreferences();
+
+    await reminderPreferences.setMode(
+      prayerType: prayerType,
+      mode: mode,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _prayerModes = {
+        ..._prayerModes,
+        prayerType: mode,
+      };
+    });
+
+    await _reschedulePrayerReminders();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${_prayerName(prayerType)} reminder set to ${mode.label}.',
         ),
       ),
     );
@@ -273,6 +348,55 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
     });
   }
 
+  String _prayerName(PrayerType prayerType) {
+    switch (prayerType) {
+      case PrayerType.fajr:
+        return 'Fajr';
+      case PrayerType.dhuhr:
+        return 'Dhuhr';
+      case PrayerType.asr:
+        return 'Asr';
+      case PrayerType.maghrib:
+        return 'Maghrib';
+      case PrayerType.isha:
+        return 'Isha';
+      case PrayerType.sunrise:
+        return 'Sunrise';
+      case PrayerType.tahajjud:
+        return 'Tahajjud';
+    }
+  }
+
+  IconData _prayerIcon(PrayerType prayerType) {
+    switch (prayerType) {
+      case PrayerType.fajr:
+        return Icons.nights_stay_outlined;
+      case PrayerType.dhuhr:
+        return Icons.wb_sunny_outlined;
+      case PrayerType.asr:
+        return Icons.light_mode_outlined;
+      case PrayerType.maghrib:
+        return Icons.wb_twilight_outlined;
+      case PrayerType.isha:
+        return Icons.dark_mode_outlined;
+      case PrayerType.sunrise:
+        return Icons.wb_twilight_outlined;
+      case PrayerType.tahajjud:
+        return Icons.bedtime_outlined;
+    }
+  }
+
+  IconData _modeIcon(PrayerReminderMode mode) {
+    switch (mode) {
+      case PrayerReminderMode.adhan:
+        return Icons.volume_up_outlined;
+      case PrayerReminderMode.notification:
+        return Icons.notifications_outlined;
+      case PrayerReminderMode.off:
+        return Icons.notifications_off_outlined;
+    }
+  }
+
   @override
   void dispose() {
     AdhanAudioService.instance.stop();
@@ -302,10 +426,10 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
           Card(
             child: SwitchListTile(
               title: const Text(
-                'Prayer Notifications & Adhan',
+                'Prayer Reminders',
               ),
               subtitle: const Text(
-                'Receive Salah reminders and play the full Adhan at prayer time.',
+                'Enable scheduled reminders for your daily Salah.',
               ),
               value: _prayerNotificationsEnabled,
               onChanged:
@@ -315,7 +439,80 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
             ),
           ),
 
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.lg),
+
+          Text(
+            'Each Prayer',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+
+          const SizedBox(height: AppSpacing.sm),
+
+          ..._prayers.map(
+            (prayerType) {
+              final mode =
+                  _prayerModes[prayerType] ??
+                      PrayerReminderMode.adhan;
+
+              return Card(
+                child: ListTile(
+                  leading: Icon(
+                    _prayerIcon(prayerType),
+                  ),
+                  title: Text(
+                    _prayerName(prayerType),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Text(
+                    mode.description,
+                  ),
+                  trailing: DropdownButtonHideUnderline(
+                    child: DropdownButton<PrayerReminderMode>(
+                      value: mode,
+                      onChanged: _isLoadingPreference
+                          ? null
+                          : (newMode) {
+                              _changePrayerMode(
+                                prayerType,
+                                newMode,
+                              );
+                            },
+                      items: PrayerReminderMode.values
+                          .map(
+                            (reminderMode) {
+                              return DropdownMenuItem(
+                                value: reminderMode,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _modeIcon(reminderMode),
+                                      size: 18,
+                                    ),
+                                    const SizedBox(
+                                      width: AppSpacing.sm,
+                                    ),
+                                    Text(
+                                      reminderMode.label,
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          )
+                          .toList(),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+
+          const SizedBox(height: AppSpacing.lg),
 
           OutlinedButton.icon(
             onPressed: _requestExactAlarmPermission,
@@ -366,7 +563,7 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
                   const SizedBox(height: AppSpacing.xs),
 
                   const Text(
-                    'Preview the Adhan that ILM will play at Salah time.',
+                    'Preview the Adhan used for prayers set to Full Adhan.',
                   ),
 
                   const SizedBox(height: AppSpacing.md),
@@ -410,8 +607,9 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
           const SizedBox(height: AppSpacing.md),
 
           Text(
-            'Prayer reminders are currently prepared for the next 7 days. '
-            'ILM will later refresh this schedule automatically.',
+            'Full Adhan plays the complete Adhan at prayer time. '
+            'Notification Only shows a reminder without Adhan. '
+            'Off disables reminders for that prayer.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Colors.black54,
                 ),
