@@ -12,6 +12,7 @@ import '../widgets/daily_prayer_times_card.dart';
 import '../widgets/ilm_card.dart';
 import '../widgets/prayer_status_card.dart';
 import '../widgets/tahajjud_card.dart';
+import 'prayer_settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -83,6 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     const prayerCalculationService = PrayerCalculationService();
     const prayerService = PrayerService();
+    const tahajjudService = TahajjudService();
 
     final now = DateTime.now();
 
@@ -114,8 +116,6 @@ class _HomeScreenState extends State<HomeScreen> {
       now: now,
     );
 
-    const tahajjudService = TahajjudService();
-
     final maghrib = prayerTimes.firstWhere(
       (prayer) => prayer.type == PrayerType.maghrib,
     );
@@ -126,6 +126,25 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('ILM'),
+        actions: [
+          IconButton(
+            tooltip: 'Prayer Settings',
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => PrayerSettingsScreen(
+                    latitude: latitude,
+                    longitude: longitude,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.lg),
