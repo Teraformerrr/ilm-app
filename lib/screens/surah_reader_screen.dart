@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../core/app_spacing.dart';
 import '../models/quran_ayah.dart';
 import '../models/quran_surah.dart';
+import '../models/quran_translation.dart';
 import '../services/quran_text_service.dart';
+import '../services/quran_translation_service.dart';
 
 class SurahReaderScreen extends StatefulWidget {
   const SurahReaderScreen({
@@ -21,14 +23,24 @@ class SurahReaderScreen extends StatefulWidget {
 class _SurahReaderScreenState
     extends State<SurahReaderScreen> {
   late final Future<List<QuranAyah>> _ayahsFuture;
+  late final Future<List<QuranTranslation>>
+      _translationsFuture;
 
   @override
   void initState() {
     super.initState();
 
     const quranTextService = QuranTextService();
+    const translationService =
+        QuranTranslationService();
 
-    _ayahsFuture = quranTextService.loadSurahAyahs(
+    _ayahsFuture =
+        quranTextService.loadSurahAyahs(
+      widget.surah.number,
+    );
+
+    _translationsFuture =
+        translationService.loadSurahTranslations(
       widget.surah.number,
     );
   }
@@ -43,93 +55,122 @@ class _SurahReaderScreenState
       ),
       body: FutureBuilder<List<QuranAyah>>(
         future: _ayahsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState ==
+        builder: (context, ayahSnapshot) {
+          if (ayahSnapshot.connectionState ==
               ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(),
             );
           }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(
-                  AppSpacing.lg,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 48,
-                    ),
-                    const SizedBox(
-                      height: AppSpacing.md,
-                    ),
-                    const Text(
-                      'Unable to load Qur’an text.',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(
-                      height: AppSpacing.sm,
-                    ),
-                    Text(
-                      snapshot.error.toString(),
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(
-                            color: Colors.black54,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
+          if (ayahSnapshot.hasError) {
+            return _ErrorView(
+              message:
+                  'Unable to load Qur’an text.',
+              error: ayahSnapshot.error,
             );
           }
 
-          final ayahs =
-              snapshot.data ?? const <QuranAyah>[];
+          return FutureBuilder<
+              List<QuranTranslation>>(
+            future: _translationsFuture,
+            builder:
+                (context, translationSnapshot) {
+              if (translationSnapshot
+                      .connectionState ==
+                  ConnectionState.waiting) {
+                return const Center(
+                  child:
+                      CircularProgressIndicator(),
+                );
+              }
 
-          return ListView(
-            padding: const EdgeInsets.all(
-              AppSpacing.lg,
-            ),
-            children: [
-              _SurahHeader(
-                surah: widget.surah,
-              ),
+              if (translationSnapshot.hasError) {
+                return _ErrorView(
+                  message:
+                      'Unable to load English translation.',
+                  error:
+                      translationSnapshot.error,
+                );
+              }
 
-              const SizedBox(
-                height: AppSpacing.xl,
-              ),
+              final ayahs =
+                  ayahSnapshot.data ??
+                      const <QuranAyah>[];
 
-              ...ayahs.map(
-                (ayah) {
-                  return _AyahCard(
-                    ayah: ayah,
-                  );
-                },
-              ),
+              final translations =
+                  translationSnapshot.data ??
+                      const <QuranTranslation>[];
 
-              const SizedBox(
-                height: AppSpacing.lg,
-              ),
+              if (ayahs.length !=
+                  translations.length) {
+                return const _ErrorView(
+                  message:
+                      'Qur’an text and translation counts do not match.',
+                );
+              }
 
-              Center(
-                child: Text(
-                  'Qur’an text source: Tanzil',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(
-                        color: Colors.black54,
-                      ),
+              return ListView(
+                padding: const EdgeInsets.all(
+                  AppSpacing.lg,
                 ),
-              ),
-            ],
+                children: [
+                  _SurahHeader(
+                    surah: widget.surah,
+                  ),
+
+                  const SizedBox(
+                    height: AppSpacing.xl,
+                  ),
+
+                  ...List.generate(
+                    ayahs.length,
+                    (index) {
+                      final ayah =
+                          ayahs[index];
+
+                      final translation =
+                          translations[index];
+
+                      if (ayah.ayahNumber !=
+                          translation
+                              .ayahNumber) {
+                        return const _ErrorView(
+                          message:
+                              'Qur’an Ayah and translation mapping mismatch.',
+                        );
+                      }
+
+                      return _AyahCard(
+                        ayah: ayah,
+                        translation:
+                            translation,
+                      );
+                    },
+                  ),
+
+                  const SizedBox(
+                    height: AppSpacing.lg,
+                  ),
+
+                  Center(
+                    child: Text(
+                      'Qur’an text: Tanzil • English: Marmaduke Pickthall',
+                      textAlign:
+                          TextAlign.center,
+                      style:
+                          Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                color:
+                                    Colors.black54,
+                              ),
+                    ),
+                  ),
+                ],
+              );
+            },
           );
         },
       ),
@@ -156,7 +197,8 @@ class _SurahHeader extends StatelessWidget {
               .textTheme
               .headlineMedium
               ?.copyWith(
-                fontWeight: FontWeight.w700,
+                fontWeight:
+                    FontWeight.w700,
               ),
         ),
 
@@ -171,7 +213,8 @@ class _SurahHeader extends StatelessWidget {
               .textTheme
               .titleLarge
               ?.copyWith(
-                fontWeight: FontWeight.w700,
+                fontWeight:
+                    FontWeight.w700,
               ),
         ),
 
@@ -199,9 +242,11 @@ class _SurahHeader extends StatelessWidget {
 class _AyahCard extends StatelessWidget {
   const _AyahCard({
     required this.ayah,
+    required this.translation,
   });
 
   final QuranAyah ayah;
+  final QuranTranslation translation;
 
   @override
   Widget build(BuildContext context) {
@@ -222,7 +267,8 @@ class _AyahCard extends StatelessWidget {
                 CircleAvatar(
                   radius: 18,
                   child: Text(
-                    ayah.ayahNumber.toString(),
+                    ayah.ayahNumber
+                        .toString(),
                   ),
                 ),
 
@@ -231,11 +277,12 @@ class _AyahCard extends StatelessWidget {
                 IconButton(
                   tooltip: 'Bookmark',
                   onPressed: () {
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(
                       const SnackBar(
                         content: Text(
-                          'Bookmarks will be added next.',
+                          'Bookmarks will be added later.',
                         ),
                       ),
                     );
@@ -254,13 +301,124 @@ class _AyahCard extends StatelessWidget {
             SelectableText(
               ayah.arabicText,
               textAlign: TextAlign.right,
-              textDirection: TextDirection.rtl,
+              textDirection:
+                  TextDirection.rtl,
               style: const TextStyle(
                 fontSize: 26,
                 height: 2,
-                fontWeight: FontWeight.w500,
+                fontWeight:
+                    FontWeight.w500,
               ),
             ),
+
+            const SizedBox(
+              height: AppSpacing.lg,
+            ),
+
+            const Divider(),
+
+            const SizedBox(
+              height: AppSpacing.md,
+            ),
+
+            Text(
+              'English',
+              style: Theme.of(context)
+                  .textTheme
+                  .labelLarge
+                  ?.copyWith(
+                    fontWeight:
+                        FontWeight.w700,
+                  ),
+            ),
+
+            const SizedBox(
+              height: AppSpacing.sm,
+            ),
+
+            SelectableText(
+              translation.text,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyLarge
+                  ?.copyWith(
+                    height: 1.6,
+                  ),
+            ),
+
+            const SizedBox(
+              height: AppSpacing.xs,
+            ),
+
+            Text(
+              'Marmaduke Pickthall',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(
+                    color:
+                        Colors.black54,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  const _ErrorView({
+    required this.message,
+    this.error,
+  });
+
+  final String message;
+  final Object? error;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(
+          AppSpacing.lg,
+        ),
+        child: Column(
+          mainAxisSize:
+              MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 48,
+            ),
+
+            const SizedBox(
+              height: AppSpacing.md,
+            ),
+
+            Text(
+              message,
+              textAlign:
+                  TextAlign.center,
+            ),
+
+            if (error != null) ...[
+              const SizedBox(
+                height: AppSpacing.sm,
+              ),
+              Text(
+                error.toString(),
+                textAlign:
+                    TextAlign.center,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(
+                      color:
+                          Colors.black54,
+                    ),
+              ),
+            ],
           ],
         ),
       ),
