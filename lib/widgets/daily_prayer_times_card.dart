@@ -65,6 +65,18 @@ class DailyPrayerTimesCard extends StatelessWidget {
     }
   }
 
+  String _formatRakahBreakdown(PrayerTime prayer) {
+    if (prayer.rakahBreakdown.isEmpty) {
+      return '';
+    }
+
+    return prayer.rakahBreakdown
+        .map(
+          (part) => '${part.rakah} ${part.label}',
+        )
+        .join(' • ');
+  }
+
   @override
   Widget build(BuildContext context) {
     return IlmCard(
@@ -78,10 +90,10 @@ class DailyPrayerTimesCard extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: AppSpacing.md),
-
           ...prayerTimes.map(
             (prayer) {
               final isNextPrayer = nextPrayer?.type == prayer.type;
+              final rakahText = _formatRakahBreakdown(prayer);
 
               return Container(
                 margin: const EdgeInsets.symmetric(
@@ -101,40 +113,68 @@ class DailyPrayerTimesCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      _prayerIcon(prayer.type),
-                      size: 20,
-                      color: isNextPrayer
-                          ? Theme.of(context).colorScheme.primary
-                          : null,
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Icon(
+                        _prayerIcon(prayer.type),
+                        size: 20,
+                        color: isNextPrayer
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
+                      ),
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
-                      child: Text(
-                        _prayerName(prayer.type),
-                        style:
-                            Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _prayerName(prayer.type),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyLarge
+                                ?.copyWith(
                                   fontWeight: isNextPrayer
                                       ? FontWeight.w700
-                                      : FontWeight.w400,
+                                      : FontWeight.w500,
                                   color: isNextPrayer
                                       ? Theme.of(context).colorScheme.primary
                                       : null,
                                 ),
+                          ),
+                          if (rakahText.isNotEmpty) ...[
+                            const SizedBox(height: AppSpacing.xs),
+                            Text(
+                              rakahText,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: isNextPrayer
+                                        ? Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withValues(alpha: 0.8)
+                                        : Colors.black54,
+                                  ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
+                    const SizedBox(width: AppSpacing.sm),
                     Text(
                       _formatTime(prayer.time),
-                      style:
-                          Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                fontWeight: isNextPrayer
-                                    ? FontWeight.w700
-                                    : FontWeight.w600,
-                                color: isNextPrayer
-                                    ? Theme.of(context).colorScheme.primary
-                                    : null,
-                              ),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            fontWeight: isNextPrayer
+                                ? FontWeight.w700
+                                : FontWeight.w600,
+                            color: isNextPrayer
+                                ? Theme.of(context).colorScheme.primary
+                                : null,
+                          ),
                     ),
                   ],
                 ),

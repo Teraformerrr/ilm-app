@@ -18,6 +18,8 @@ class PrayerStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fardRakah = prayer.fardRakah;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -40,7 +42,7 @@ class PrayerStatusCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.mosque_outlined,
                 size: 22,
                 color: AppColors.primary,
@@ -69,7 +71,27 @@ class PrayerStatusCard extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
           ),
-          const SizedBox(height: AppSpacing.xs),
+          if (fardRakah != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+              child: Text(
+                '$fardRakah Rak‘ah Fard',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+              ),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.sm),
           PrayerCountdown(
             prayer: prayer,
           ),
