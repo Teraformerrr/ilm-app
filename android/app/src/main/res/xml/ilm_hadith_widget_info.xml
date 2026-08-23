@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<appwidget-provider
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/ilm_hadith_widget_description"
+    android:initialLayout="@layout/ilm_hadith_widget"
+    android:minWidth="250dp"
+    android:minHeight="150dp"
+    android:minResizeWidth="180dp"
+    android:minResizeHeight="120dp"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:updatePeriodMillis="86400000"
+    android:previewLayout="@layout/ilm_hadith_widget" />

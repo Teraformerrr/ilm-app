@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+
+    <string name="ilm_widget_description">
+        Daily Quran Ayah and authentic Hadith reminders from ILM
+    </string>
+
+    <string name="ilm_ayah_widget_description">
+        Daily Quran Ayah from ILM
+    </string>
+
+    <string name="ilm_hadith_widget_description">
+        Daily authentic Hadith reminder from ILM
+    </string>
+
+    <string name="ilm_combined_widget_description">
+        Daily Quran Ayah and Hadith from ILM
+    </string>
+
+</resources>

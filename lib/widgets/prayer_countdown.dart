@@ -7,46 +7,70 @@ import '../models/prayer_time.dart';
 class PrayerCountdown extends StatefulWidget {
   const PrayerCountdown({
     required this.prayer,
+    this.textStyle,
     super.key,
   });
 
   final PrayerTime prayer;
+  final TextStyle? textStyle;
 
   @override
-  State<PrayerCountdown> createState() => _PrayerCountdownState();
+  State<PrayerCountdown> createState() =>
+      _PrayerCountdownState();
 }
 
-class _PrayerCountdownState extends State<PrayerCountdown> {
+class _PrayerCountdownState
+    extends State<PrayerCountdown> {
   Timer? _timer;
-  Duration _remaining = Duration.zero;
+
+  Duration _remaining =
+      Duration.zero;
 
   @override
   void initState() {
     super.initState();
+
     _updateRemaining();
 
     _timer = Timer.periodic(
-      const Duration(seconds: 30),
+      const Duration(
+        seconds: 30,
+      ),
       (_) => _updateRemaining(),
     );
   }
 
   void _updateRemaining() {
-    final now = DateTime.now();
-    final difference = widget.prayer.time.difference(now);
+    final now =
+        DateTime.now();
 
-    if (!mounted) return;
+    final difference =
+        widget.prayer.time.difference(
+      now,
+    );
+
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
-      _remaining = difference.isNegative
-          ? Duration.zero
-          : difference;
+      _remaining =
+          difference.isNegative
+              ? Duration.zero
+              : difference;
     });
   }
 
-  String _formatDuration(Duration duration) {
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60);
+  String _formatDuration(
+    Duration duration,
+  ) {
+    final hours =
+        duration.inHours;
+
+    final minutes =
+        duration.inMinutes.remainder(
+      60,
+    );
 
     if (hours > 0) {
       return '${hours}h ${minutes}m remaining';
@@ -56,10 +80,15 @@ class _PrayerCountdownState extends State<PrayerCountdown> {
   }
 
   @override
-  void didUpdateWidget(covariant PrayerCountdown oldWidget) {
-    super.didUpdateWidget(oldWidget);
+  void didUpdateWidget(
+    covariant PrayerCountdown oldWidget,
+  ) {
+    super.didUpdateWidget(
+      oldWidget,
+    );
 
-    if (oldWidget.prayer.time != widget.prayer.time) {
+    if (oldWidget.prayer.time !=
+        widget.prayer.time) {
       _updateRemaining();
     }
   }
@@ -67,16 +96,30 @@ class _PrayerCountdownState extends State<PrayerCountdown> {
   @override
   void dispose() {
     _timer?.cancel();
+
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
+    final defaultStyle =
+        Theme.of(context)
+            .textTheme
+            .bodyMedium
+            ?.copyWith(
+          fontWeight:
+              FontWeight.w600,
+        );
+
     return Text(
-      _formatDuration(_remaining),
-      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w500,
-          ),
+      _formatDuration(
+        _remaining,
+      ),
+      style:
+          widget.textStyle ??
+              defaultStyle,
     );
   }
 }

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_vertical"
+    android:padding="18dp"
+    android:background="@drawable/ilm_widget_background">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ILM"
+            android:textColor="#D6B86A"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end"
+            android:text="DAILY REMINDER"
+            android:textColor="#D6B86A"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <!-- Daily Ayah -->
+    <TextView
+        android:id="@+id/widget_arabic"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="end"
+        android:textDirection="rtl"
+        android:includeFontPadding="false"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:text="أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ"
+        android:textColor="#FFFFFF"
+        android:textSize="19sp"
+        android:lineSpacingMultiplier="1.15" />
+
+    <TextView
+        android:id="@+id/widget_ayah_translation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="7dp"
+        android:includeFontPadding="false"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:text="Verily in the remembrance of Allah do hearts find rest."
+        android:textColor="#E8E5DD"
+        android:textSize="12sp"
+        android:lineSpacingMultiplier="1.10" />
+
+    <TextView
+        android:id="@+id/widget_ayah_reference"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:text="Ar-Ra'd • 13:28"
+        android:textColor="#D6B86A"
+        android:textSize="10sp"
+        android:textStyle="bold" />
+
+    <!-- Safe RemoteViews divider -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="9dp"
+        android:background="#34534D"
+        android:text="" />
+
+    <!-- Daily Hadith -->
+    <TextView
+        android:id="@+id/widget_hadith"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:includeFontPadding="false"
+        android:maxLines="3"
+        android:ellipsize="end"
+        android:text="The most beloved deeds to Allah are those that are most consistent, even if they are small."
+        android:textColor="#FFFFFF"
+        android:textSize="13sp"
+        android:lineSpacingMultiplier="1.10" />
+
+    <TextView
+        android:id="@+id/widget_hadith_reference"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:text="Sahih al-Bukhari 6464"
+        android:textColor="#D6B86A"
+        android:textSize="10sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

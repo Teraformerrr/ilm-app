@@ -10,16 +10,19 @@
     <!-- Required so scheduled prayer notifications can be restored after reboot -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!-- Prayer / Adhan scheduling -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
+    <!-- Adhan foreground playback -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" /> 
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:label="ilm"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
 
         <activity
             android:name=".MainActivity"
@@ -47,10 +50,74 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
-        <!-- Required for scheduled local notifications -->
+        <!-- ========================================================= -->
+        <!-- ILM COMBINED DAILY WIDGET -->
+        <!-- ========================================================= -->
+
+        <receiver
+            android:name=".IlmDailyWidgetProvider"
+            android:enabled="true"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/ilm_daily_widget_info" />
+
+        </receiver>
+
+        <!-- ========================================================= -->
+        <!-- ILM DAILY AYAH WIDGET -->
+        <!-- ========================================================= -->
+
+        <receiver
+            android:name=".IlmAyahWidgetProvider"
+            android:enabled="true"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/ilm_ayah_widget_info" />
+
+        </receiver>
+
+        <!-- ========================================================= -->
+        <!-- ILM DAILY HADITH WIDGET -->
+        <!-- ========================================================= -->
+
+        <receiver
+            android:name=".IlmHadithWidgetProvider"
+            android:enabled="true"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/ilm_hadith_widget_info" />
+
+        </receiver>
+
+        <!-- ========================================================= -->
+        <!-- LOCAL NOTIFICATIONS -->
+        <!-- ========================================================= -->
+
         <receiver
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
             android:exported="false" />
+
+        <!-- ========================================================= -->
+        <!-- ADHAN ALARM -->
+        <!-- ========================================================= -->
 
         <receiver
             android:name=".AdhanAlarmReceiver"
@@ -61,7 +128,10 @@
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
 
-        <!-- Restores scheduled notifications after reboot/app update -->
+        <!-- ========================================================= -->
+        <!-- RESTORE NOTIFICATIONS AFTER REBOOT / APP UPDATE -->
+        <!-- ========================================================= -->
+
         <receiver
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
             android:exported="false">

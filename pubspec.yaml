@@ -41,7 +41,13 @@ dependencies:
   timezone: ^0.11.1
   shared_preferences: ^2.5.5
   audioplayers: ^6.8.1
-
+  scrollable_positioned_list: ^0.3.8
+  hijri: ^3.0.1
+  intl: ^0.20.3
+  country_picker: ^2.0.28
+  flutter_compass: ^0.8.1
+  home_widget: ^0.9.3
+  http: ^1.5.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -52,21 +58,30 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
 flutter:
-
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
 
   assets:
     - assets/audio/adhan_default.mp3
     - assets/data/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+
+  image_path: "assets/icons/ilm_icon_foreground.png"
+
+  adaptive_icon_background: "#0B5D4B"
+  adaptive_icon_foreground: "assets/icons/ilm_icon_foreground.png"
+
+  min_sdk_android: 21
+  remove_alpha_ios: true
 
   # To add assets to your application, add an assets section, like this:
   # assets:
